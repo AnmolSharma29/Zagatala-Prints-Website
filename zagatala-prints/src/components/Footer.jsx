@@ -344,7 +344,7 @@ export default function Footer() {
                     href="tel:+994559087883"
                     className="footer-link text-sm"
                   >
-                    +994 55 908 78 83
+                    +994 70 908 78 83
                   </a>
                 </div>
               </div>
