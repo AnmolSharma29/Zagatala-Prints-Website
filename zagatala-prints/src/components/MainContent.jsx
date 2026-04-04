@@ -377,7 +377,7 @@ export default function MainContent() {
               letterSpacing: "0.04em",
             }}
           >
-            Follow Us on Instagram Anmol
+            Follow Us on Instagram
           </h2>
           <a
             href="https://www.instagram.com/zagatala_prints"
