@@ -1,561 +1,597 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
-const NAV_LINKS = [
-  { label: "Home", href: "#" },
-  { label: "About Us", href: "#about" },
-  { label: "Contact", href: "#contact" },
-];
-
-const BRAND_COLOR = "#512a97";
-const BRAND_LIGHT = "#6b3fc4";
-const BG_COLOR = "#f7f5fa";
-
-export default function MainContent() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [hoveredPost, setHoveredPost] = useState(null);
-
-  // ——— Instagram Graph API ———
-  // Replace with your long-lived access token from Meta Developer portal
-  const INSTAGRAM_TOKEN = "YOUR_INSTAGRAM_ACCESS_TOKEN";
-  const POST_COUNT = 12;
-
+// --- Intersection Observer Hook ---
+function useInView(options = {}) {
+  const ref = useRef(null);
+  const [isInView, setIsInView] = useState(false);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIsInView(true); observer.unobserve(el); } },
+      { threshold: 0.15, ...options }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
+  return [ref, isInView];
+}
 
-  useEffect(() => {
-    if (INSTAGRAM_TOKEN === "YOUR_INSTAGRAM_ACCESS_TOKEN") {
-      // Demo mode — show placeholder grid
-      setLoading(false);
-      setError(true);
-      return;
-    }
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(
-          `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=${POST_COUNT}&access_token=${INSTAGRAM_TOKEN}`
-        );
-        const data = await res.json();
-        if (data.data) {
-          setPosts(
-            data.data.filter(
-              (p) => p.media_type === "IMAGE" || p.media_type === "CAROUSEL_ALBUM" || p.media_type === "VIDEO"
-            )
-          );
-        }
-      } catch (err) {
-        console.error("Instagram fetch error:", err);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPosts();
-  }, []);
-
+// --- Animated wrapper ---
+function Reveal({ children, delay = 0, direction = "up", className = "" }) {
+  const [ref, isInView] = useInView();
+  const transforms = { up: "translateY(48px)", down: "translateY(-48px)", left: "translateX(48px)", right: "translateX(-48px)", scale: "scale(0.92)" };
   return (
     <div
+      ref={ref}
+      className={className}
       style={{
-        fontFamily: "'DM Sans', sans-serif",
-        background: BG_COLOR,
-        minHeight: "100vh",
+        opacity: isInView ? 1 : 0,
+        transform: isInView ? "translate(0,0) scale(1)" : transforms[direction],
+        transition: `opacity 0.7s cubic-bezier(.22,1,.36,1) ${delay}s, transform 0.7s cubic-bezier(.22,1,.36,1) ${delay}s`,
       }}
     >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+      {children}
+    </div>
+  );
+}
 
-        .nav-link {
-          position: relative;
-          letter-spacing: 0.08em;
-          text-decoration: none;
-          color: rgba(255, 255, 255, 0.85);
-          transition: color 0.3s ease;
-        }
-        .nav-link::after {
-          content: '';
-          position: absolute;
-          bottom: -4px;
-          left: 0;
-          width: 0;
-          height: 2.5px;
-          background: #fff;
-          border-radius: 2px;
-          transition: width 0.3s ease;
-        }
-        .nav-link:hover {
-          color: #fff;
-        }
-        .nav-link:hover::after {
-          width: 100%;
-        }
+// --- Icon Components ---
+const icons = {
+  commercial: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 40, height: 40 }}>
+      <rect x="6" y="12" width="36" height="24" rx="3" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M6 19h36" stroke="currentColor" strokeWidth="2.5" />
+      <rect x="12" y="24" width="10" height="6" rx="1" stroke="currentColor" strokeWidth="2" />
+      <path d="M28 25h8M28 29h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  ),
+  event: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 40, height: 40 }}>
+      <path d="M12 8v6M36 8v6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <rect x="6" y="12" width="36" height="28" rx="3" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M6 20h36" stroke="currentColor" strokeWidth="2.5" />
+      <circle cx="18" cy="28" r="2.5" fill="currentColor" />
+      <circle cx="30" cy="28" r="2.5" fill="currentColor" />
+      <circle cx="24" cy="34" r="2.5" fill="currentColor" />
+    </svg>
+  ),
+  packaging: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 40, height: 40 }}>
+      <path d="M24 6L42 16v16L24 42 6 32V16L24 6z" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M24 22v20M6 16l18 6 18-6" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+      <path d="M15 11l18 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+    </svg>
+  ),
+  sticker: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 40, height: 40 }}>
+      <circle cx="24" cy="24" r="16" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M24 8a16 16 0 0 1 16 16H24V8z" fill="currentColor" opacity="0.15" />
+      <path d="M18 22l4 4 8-8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  office: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 40, height: 40 }}>
+      <rect x="8" y="6" width="24" height="36" rx="2" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M8 6c0-1.1.9-2 2-2h20a2 2 0 0 1 2 2" stroke="currentColor" strokeWidth="2.5" />
+      <path d="M14 16h12M14 22h12M14 28h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M32 18h6a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2h-6" stroke="currentColor" strokeWidth="2.5" />
+      <circle cx="35" cy="28" r="3" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  ),
+  cnc: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 40, height: 40 }}>
+      <rect x="8" y="8" width="32" height="32" rx="3" stroke="currentColor" strokeWidth="2.5" />
+      <circle cx="24" cy="24" r="8" stroke="currentColor" strokeWidth="2" strokeDasharray="4 3" />
+      <path d="M24 16v-4M24 36v-4M16 24h-4M36 24h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="24" cy="24" r="2.5" fill="currentColor" />
+    </svg>
+  ),
+  souvenir: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 40, height: 40 }}>
+      <path d="M24 6l4 10h10l-8 6 3 10-9-6-9 6 3-10-8-6h10l4-10z" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+      <circle cx="24" cy="24" r="4" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  ),
+};
 
-        .hamburger-line {
-          display: block;
-          width: 24px;
-          height: 2px;
-          background: #fff;
-          border-radius: 2px;
-          transition: all 0.3s ease;
-        }
-        .hamburger-active .hamburger-line {
-          background: rgba(255, 255, 255, 0.7);
-        }
-        .hamburger-active .hamburger-line:nth-child(1) {
-          transform: translateY(8px) rotate(45deg);
-        }
-        .hamburger-active .hamburger-line:nth-child(2) {
-          opacity: 0;
-        }
-        .hamburger-active .hamburger-line:nth-child(3) {
-          transform: translateY(-8px) rotate(-45deg);
-        }
+const services = [
+  { icon: "commercial", title: "Commercial Printing", desc: "Business cards (Vizitkart), high-quality lamination, and custom menus for restaurants & cafes." },
+  { icon: "event", title: "Event Stationery", desc: "Personalized designs for weddings, engagements (Nişan), birthdays, and Henna (Xına) ceremonies." },
+  { icon: "packaging", title: "Custom Packaging", desc: "Branded candy wrappers (Konfet kağızları) and product labels tailored to your brand." },
+  { icon: "sticker", title: "Stickers & Decals", desc: "Custom-shaped stickers and vinyl labels for any purpose." },
+  { icon: "office", title: "Office Supplies", desc: "Spiral-bound notebooks and personalized planners for professionals." },
+  { icon: "cnc", title: "CNC Laser-Cutting & Engraving", desc: "High-precision work on wood, acrylic, and other materials." },
+  { icon: "souvenir", title: "Artisanal Souvenirs", desc: "Authentic 3D models and souvenirs representing our local culture and landmarks." },
+];
 
-        .mobile-nav {
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .mobile-nav.open {
-          max-height: 320px;
-        }
+// const galleryItems = Array.from({ length: 19 }, (_, i) => (
+//   {
+//   id: i + 1,
+//   src: `src/gallery/image-${i + 1}.png`,
+//   caption: `Gallery Image ${i + 1}`,
+// }
+// ));
 
-        .cta-btn {
-          background: #fff;
-          color: ${BRAND_COLOR};
-          transition: background 0.3s ease, transform 0.2s ease;
-          text-decoration: none;
-        }
-        .cta-btn:hover {
-          background: rgba(255, 255, 255, 0.85);
-          transform: translateY(-1px);
-        }
+const galleryItems = [
+  { id: 1,  src: "/images/image-1.png",   caption: "Premium Business Cards" },
+  { id: 2,  src: "/images/image-2.png",    caption: "Wedding Invitation Design" },
+  { id: 4,  src: "/images/image-4.png",     caption: "Custom Candy Wrappers" },
+  { id: 5,  src: "/images/image-5.png",     caption: "Custom Candy Wrappers" },
+  { id: 6,  src: "/images/image-6.png",     caption: "Custom Candy Wrappers" },
+  { id: 7,  src: "/images/image-7.png",     caption: "Custom Candy Wrappers" },
+  { id: 8,  src: "/images/image-8.png",     caption: "Custom Candy Wrappers" },
+  { id: 9,  src: "/images/image-9.png",     caption: "Custom Candy Wrappers" },
+  { id: 10,  src: "/images/image-10.png",     caption: "Custom Candy Wrappers" },
+  { id: 11,  src: "/images/image-11.png",     caption: "Custom Candy Wrappers" },
+  { id: 12,  src: "/images/image-12.png",     caption: "Custom Candy Wrappers" },
+  { id: 13,  src: "/images/image-13.png",     caption: "Custom Candy Wrappers" },
+  { id: 14,  src: "/images/image-14.png",     caption: "Custom Candy Wrappers" },
+  { id: 15,  src: "/images/image-15.png",     caption: "Custom Candy Wrappers" },
+  { id: 16,  src: "/images/image-16.png",     caption: "Custom Candy Wrappers" },
+  { id: 17,  src: "/images/image-17.png",     caption: "Custom Candy Wrappers" },
+  { id: 18,  src: "/images/image-18.png",     caption: "Custom Candy Wrappers" },
+  { id: 19, src: "/images/image-19.png",          caption: "Artisanal Souvenir" },
+];
 
-        .mobile-link {
-          color: rgba(255, 255, 255, 0.85);
-          text-decoration: none;
-          transition: color 0.2s ease;
-        }
-        .mobile-link:hover {
-          color: #fff;
-        }
+// --- CSS Keyframes injected once ---
+const styleId = "zagatala-main-styles";
 
-        .logo-img {
-          transition: transform 0.3s ease;
-        }
-        .logo-group:hover .logo-img {
-          transform: scale(1.05);
-        }
+function injectStyles() {
+  if (document.getElementById(styleId)) return;
+  const style = document.createElement("style");
+  style.id = styleId;
+  style.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap');
 
-        .social-icon {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 38px;
-          height: 38px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.1);
-          transition: background 0.3s ease, transform 0.25s ease;
-        }
-        .social-icon:hover {
-          background: rgba(255, 255, 255, 0.25);
-          transform: translateY(-2px);
-        }
-        .social-icon svg {
-          width: 18px;
-          height: 18px;
-          fill: #fff;
-        }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: 0.4; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+    @keyframes grain {
+      0%, 100% { transform: translate(0, 0); }
+      10% { transform: translate(-2%, -2%); }
+      30% { transform: translate(1%, -3%); }
+      50% { transform: translate(-1%, 2%); }
+      70% { transform: translate(3%, 1%); }
+      90% { transform: translate(-3%, 3%); }
+    }
 
-        .footer-link {
-          color: rgba(255, 255, 255, 0.7);
-          text-decoration: none;
-          transition: color 0.2s ease;
-        }
-        .footer-link:hover {
-          color: #fff;
-        }
+    .zp-service-card:hover .zp-service-icon {
+      transform: scale(1.12) rotate(-3deg);
+      background: rgba(255,255,255,0.25) !important;
+    }
+    .zp-service-card:hover {
+      transform: translateY(-6px) !important;
+      box-shadow: 0 20px 60px rgba(78, 36, 138, 0.25) !important;
+    }
+    .zp-gallery-item:hover img {
+      transform: scale(1.08);
+    }
+    .zp-gallery-item:hover .zp-gallery-overlay {
+      opacity: 1;
+    }
+    .zp-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(78, 36, 138, 0.4);
+    }
+    .zp-stat-num {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
-        .ig-card {
-          position: relative;
-          overflow: hidden;
-          border-radius: 12px;
-          aspect-ratio: 1;
-          cursor: pointer;
-          background: #e9e5f0;
-        }
-        .ig-card img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        .ig-card:hover img {
-          transform: scale(1.08);
-        }
-        .ig-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(transparent 40%, rgba(81, 42, 151, 0.85) 100%);
-          opacity: 0;
-          transition: opacity 0.35s ease;
-          display: flex;
-          align-items: flex-end;
-          padding: 16px;
-        }
-        .ig-card:hover .ig-overlay {
-          opacity: 1;
-        }
+// ============== MAIN COMPONENT ==============
+export default function MainContent() {
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [lightbox, setLightbox] = useState(null);
 
-        .ig-placeholder {
-          aspect-ratio: 1;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #e9e5f0 0%, #d6cfe6 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          overflow: hidden;
-        }
-        .ig-placeholder::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-          animation: shimmer 2s infinite;
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
+  useEffect(() => { injectStyles(); }, []);
 
-        .ig-section-line {
-          width: 60px;
-          height: 3px;
-          border-radius: 3px;
-          background: ${BRAND_COLOR};
-        }
-      `}</style>
+  const filteredGallery = galleryItems;
 
-      {/* ========== HEADER ========== */}
-      <header
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          zIndex: 50,
-          background: "rgba(81, 42, 151, 0.97)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          boxShadow: scrolled
-            ? "0 4px 30px rgba(0, 0, 0, 0.25)"
-            : "none",
-          transition: "box-shadow 0.3s ease",
-        }}
-      >
-        <div
-          style={{ maxWidth: 1280, margin: "0 auto" }}
-          className="px-5 sm:px-8 lg:px-12"
-        >
-          <div className="flex items-center justify-between h-16 sm:h-20 lg:h-24">
-            {/* LOGO */}
-            <a
-              href="#"
-              className="logo-group flex items-center"
-              style={{ textDecoration: "none" }}
-            >
-              <img
-                src="/LOQOM-2026-AĞ.png"
-                alt="Zagatala Prints Logo"
-                className="logo-img h-10 sm:h-12 lg:h-14 w-auto"
-              />
-            </a>
+  return (
+    <main style={{ fontFamily: "'DM Sans', sans-serif", color: "#1a1a2e", overflow: "hidden" }}>
 
-            {/* DESKTOP NAV */}
-            <nav className="hidden md:flex items-center gap-8 lg:gap-12">
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="nav-link font-semibold text-sm lg:text-[0.9rem] uppercase"
-                >
-                  {link.label}
-                </a>
-              ))}
-              <a
-                href="#quote"
-                className="cta-btn ml-2 px-6 py-2.5 text-sm font-semibold uppercase rounded-full"
-                style={{ letterSpacing: "0.06em" }}
-              >
-                Get a Quote
-              </a>
-            </nav>
+      {/* =================== SERVICES SECTION =================== */}
+      <section style={{
+        padding: "100px 0 80px",
+        background: "linear-gradient(170deg, #4E248A 0%, #6B35B5 40%, #7B42C9 100%)",
+        position: "relative",
+      }}>
+        {/* Grain overlay */}
+        <div style={{
+          position: "absolute", inset: 0, opacity: 0.04, pointerEvents: "none",
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          backgroundSize: "128px",
+        }} />
+        {/* Decorative circles */}
+        <div style={{ position: "absolute", top: -60, right: -60, width: 200, height: 200, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.08)" }} />
+        <div style={{ position: "absolute", bottom: -40, left: -40, width: 160, height: 160, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.06)" }} />
 
-            {/* HAMBURGER */}
-            <button
-              className={`md:hidden flex flex-col justify-center items-center w-10 h-10 rounded-lg hover:bg-white/10 transition-colors ${
-                menuOpen ? "hamburger-active" : ""
-              }`}
-              style={{
-                gap: 6,
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-              }}
-              onClick={() => setMenuOpen((prev) => !prev)}
-              aria-label="Toggle menu"
-            >
-              <span className="hamburger-line" />
-              <span className="hamburger-line" />
-              <span className="hamburger-line" />
-            </button>
-          </div>
-        </div>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", position: "relative", zIndex: 1 }}>
+          <Reveal>
+            <div style={{ textAlign: "center", marginBottom: 64 }}>
+              <span style={{
+                display: "inline-block",
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: 3,
+                textTransform: "uppercase",
+                color: "#FFD700",
+                marginBottom: 16,
+                padding: "6px 20px",
+                borderRadius: 100,
+                border: "1px solid rgba(255,215,0,0.3)",
+                background: "rgba(255,215,0,0.08)",
+              }}>What We Do</span>
+              <h2 style={{
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: "clamp(32px, 5vw, 52px)",
+                fontWeight: 800,
+                color: "#fff",
+                margin: "16px 0",
+                lineHeight: 1.15,
+              }}>Our Services</h2>
+              <p style={{
+                fontSize: 17, color: "rgba(255,255,255,0.7)", maxWidth: 560, margin: "0 auto", lineHeight: 1.7,
+              }}>
+                From business essentials to artisanal keepsakes — we bring your vision to life with precision and craft.
+              </p>
+            </div>
+          </Reveal>
 
-        {/* MOBILE NAV */}
-        <div
-          className={`mobile-nav md:hidden ${menuOpen ? "open" : ""}`}
-          style={{
-            borderTop: menuOpen
-              ? "1px solid rgba(255, 255, 255, 0.15)"
-              : "none",
-          }}
-        >
-          <div
-            className="px-5 sm:px-8 py-2"
-            style={{ maxWidth: 1280, margin: "0 auto" }}
-          >
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="mobile-link block py-3.5 font-semibold text-sm uppercase"
-                style={{
-                  letterSpacing: "0.08em",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
-                }}
-                onClick={() => setMenuOpen(false)}
-              >
-                {link.label}
-              </a>
-            ))}
-            <a
-              href="#quote"
-              className="cta-btn block mt-4 mb-3 px-5 py-3 text-sm text-center font-semibold uppercase rounded-full"
-              style={{ letterSpacing: "0.06em" }}
-              onClick={() => setMenuOpen(false)}
-            >
-              Get a Quote
-            </a>
-          </div>
-        </div>
-      </header>
-
-      {/* SPACER */}
-      <div className="h-16 sm:h-20 lg:h-24" />
-
-      {/* ========== INSTAGRAM FEED SECTION ========== */}
-      <section
-        className="px-5 sm:px-8 lg:px-12 py-14 sm:py-20 lg:py-24"
-        style={{ maxWidth: 1280, margin: "0 auto" }}
-      >
-        {/* Section header */}
-        <div className="flex flex-col items-center text-center mb-10 sm:mb-14">
-          <div className="ig-section-line mb-5" />
-          <h2
-            className="text-2xl sm:text-3xl lg:text-4xl font-bold"
-            style={{
-              fontFamily: "'Bebas Neue', sans-serif",
-              color: "#1a1a1a",
-              letterSpacing: "0.04em",
-            }}
-          >
-            Follow Us on Instagram
-          </h2>
-          <a
-            href="https://www.instagram.com/zagatala_prints"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 text-sm font-semibold"
-            style={{
-              color: BRAND_COLOR,
-              textDecoration: "none",
-              letterSpacing: "0.03em",
-            }}
-          >
-            @zagatala_prints
-          </a>
-        </div>
-
-        {/* Posts grid */}
-        {loading ? (
-          /* Loading skeleton */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="ig-placeholder" />
-            ))}
-          </div>
-        ) : posts.length > 0 ? (
-          /* Live posts */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-            {posts.map((post) => (
-              <a
-                key={post.id}
-                href={post.permalink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ig-card"
-                onMouseEnter={() => setHoveredPost(post.id)}
-                onMouseLeave={() => setHoveredPost(null)}
-              >
-                <img
-                  src={
-                    post.media_type === "VIDEO"
-                      ? post.thumbnail_url
-                      : post.media_url
-                  }
-                  alt={post.caption ? post.caption.slice(0, 80) : "Instagram post"}
-                  loading="lazy"
-                />
-                <div className="ig-overlay">
-                  <p
-                    className="text-xs sm:text-sm"
-                    style={{
-                      color: "#fff",
-                      lineHeight: 1.5,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {post.caption || "View on Instagram"}
-                  </p>
-                </div>
-                {/* Video indicator */}
-                {post.media_type === "VIDEO" && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 10,
-                      right: 10,
-                      background: "rgba(0,0,0,0.5)",
-                      borderRadius: "50%",
-                      width: 28,
-                      height: 28,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff">
-                      <polygon points="5,3 19,12 5,21" />
-                    </svg>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))",
+            gap: 24,
+          }}>
+            {services.map((s, i) => (
+              <Reveal key={s.title} delay={0.08 * i} direction="up">
+                <div className="zp-service-card" style={{
+                  background: "rgba(255,255,255,0.08)",
+                  backdropFilter: "blur(12px)",
+                  borderRadius: 20,
+                  padding: "36px 28px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  transition: "all 0.4s cubic-bezier(.22,1,.36,1)",
+                  cursor: "default",
+                  height: "100%",
+                }}>
+                  <div className="zp-service-icon" style={{
+                    width: 64, height: 64, borderRadius: 16,
+                    background: "rgba(255,255,255,0.12)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#FFD700",
+                    marginBottom: 20,
+                    transition: "all 0.4s cubic-bezier(.22,1,.36,1)",
+                  }}>
+                    {icons[s.icon]}
                   </div>
-                )}
-              </a>
+                  <h3 style={{
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: 19, fontWeight: 700, color: "#fff", marginBottom: 10,
+                  }}>{s.title}</h3>
+                  <p style={{
+                    fontSize: 14.5, color: "rgba(255,255,255,0.65)", lineHeight: 1.7, margin: 0,
+                  }}>{s.desc}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
-        ) : (
-          /* Placeholder / demo state */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-            {Array.from({ length: 8 }).map((_, i) => {
-              const patterns = [
-                { emoji: "🖨️", label: "Business Cards" },
-                { emoji: "📋", label: "Brochures" },
-                { emoji: "🎨", label: "Posters" },
-                { emoji: "📦", label: "Packaging" },
-                { emoji: "✉️", label: "Envelopes" },
-                { emoji: "📕", label: "Booklets" },
-                { emoji: "🏷️", label: "Labels" },
-                { emoji: "🖼️", label: "Canvas Prints" },
-              ];
-              const p = patterns[i % patterns.length];
-              return (
-                <a
-                  key={i}
-                  href="https://www.instagram.com/zagatala_prints"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ig-card"
-                  style={{
-                    background: `linear-gradient(135deg, ${
-                      i % 2 === 0
-                        ? "rgba(81,42,151,0.08), rgba(81,42,151,0.16)"
-                        : "rgba(81,42,151,0.05), rgba(81,42,151,0.12)"
-                    })`,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    cursor: "pointer",
-                    transition: "background 0.3s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = `linear-gradient(135deg, rgba(81,42,151,0.14), rgba(81,42,151,0.24))`)
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = `linear-gradient(135deg, ${
-                      i % 2 === 0
-                        ? "rgba(81,42,151,0.08), rgba(81,42,151,0.16)"
-                        : "rgba(81,42,151,0.05), rgba(81,42,151,0.12)"
-                    })`)
-                  }
-                >
-                  <span style={{ fontSize: 32 }}>{p.emoji}</span>
-                  <span
-                    className="text-xs sm:text-sm font-semibold"
-                    style={{ color: BRAND_COLOR, opacity: 0.7 }}
-                  >
-                    {p.label}
-                  </span>
-                </a>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Follow button */}
-        <div className="flex justify-center mt-10 sm:mt-12">
-          <a
-            href="https://www.instagram.com/zagatala_prints"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2.5 px-7 py-3 rounded-full text-sm font-semibold uppercase"
-            style={{
-              background: BRAND_COLOR,
-              color: "#fff",
-              letterSpacing: "0.06em",
-              textDecoration: "none",
-              transition: "background 0.3s ease, transform 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = BRAND_LIGHT;
-              e.currentTarget.style.transform = "translateY(-2px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = BRAND_COLOR;
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
-          >
-            {/* Instagram icon */}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="#fff" strokeWidth="2"/>
-              <circle cx="12" cy="12" r="5" stroke="#fff" strokeWidth="2"/>
-              <circle cx="17.5" cy="6.5" r="1.5" fill="#fff"/>
-            </svg>
-            Follow @zagatala_prints
-          </a>
         </div>
       </section>
-    </div>
+
+      {/* =================== ABOUT US SECTION =================== */}
+      <section style={{
+        padding: "100px 0",
+        background: "#FAFAFA",
+        position: "relative",
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 480px), 1fr))",
+            gap: 60,
+            alignItems: "center",
+          }}>
+            {/* Left - Visual */}
+            <Reveal direction="right">
+              <div style={{ position: "relative" }}>
+                <div style={{
+                  background: "linear-gradient(135deg, #4E248A, #7B42C9)",
+                  borderRadius: 24,
+                  padding: 40,
+                  position: "relative",
+                  overflow: "hidden",
+                  minHeight: 400,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                }}>
+                  {/* Decorative pattern */}
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    backgroundImage: `radial-gradient(circle at 2px 2px, rgba(255,255,255,0.07) 1px, transparent 0)`,
+                    backgroundSize: "24px 24px",
+                  }} />
+                  {/* Large decorative text */}
+                  <div style={{
+                    position: "absolute", top: 24, left: 28,
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: "clamp(80px, 12vw, 140px)",
+                    fontWeight: 800,
+                    color: "rgba(255,255,255,0.06)",
+                    lineHeight: 1,
+                    userSelect: "none",
+                  }}>ZP</div>
+
+                  <div style={{ position: "relative", zIndex: 1 }}>
+                    <div style={{
+                      display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: "auto",
+                    }}>
+                      {[
+                        { num: "8+", label: "Years Experience" },
+                        { num: "2K+", label: "Happy Clients" },
+                        { num: "15K+", label: "Projects Done" },
+                        { num: "100%", label: "Satisfaction" },
+                      ].map((stat, i) => (
+                        <Reveal key={stat.label} delay={0.1 * i} direction="scale">
+                          <div style={{
+                            background: "rgba(255,255,255,0.1)",
+                            backdropFilter: "blur(8px)",
+                            borderRadius: 16,
+                            padding: "20px 16px",
+                            textAlign: "center",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                          }}>
+                            <div className="zp-stat-num" style={{
+                              fontFamily: "'Outfit', sans-serif",
+                              fontSize: 32, fontWeight: 800,
+                            }}>{stat.num}</div>
+                            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 4, fontWeight: 500 }}>
+                              {stat.label}
+                            </div>
+                          </div>
+                        </Reveal>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Right - Text */}
+            <Reveal direction="left">
+              <div>
+                <span style={{
+                  display: "inline-block",
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 13, fontWeight: 600, letterSpacing: 3,
+                  textTransform: "uppercase", color: "#4E248A",
+                  marginBottom: 16, padding: "6px 20px",
+                  borderRadius: 100, border: "1px solid rgba(78,36,138,0.2)",
+                  background: "rgba(78,36,138,0.06)",
+                }}>About Us</span>
+
+                <h2 style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: "clamp(28px, 4vw, 44px)",
+                  fontWeight: 800, color: "#1a1a2e",
+                  margin: "16px 0 24px", lineHeight: 1.2,
+                }}>
+                  Crafting Print Excellence in <span style={{ color: "#4E248A" }}>Azerbaijan</span>
+                </h2>
+
+                <p style={{
+                  fontSize: 16, color: "#555", lineHeight: 1.85, marginBottom: 20,
+                }}>
+                  Based in the heart of Zaqatala, Azerbaijan, <strong>Zagatala Prints</strong> is a full-service printing shop dedicated to delivering premium-quality print solutions for businesses, events, and personal projects.
+                </p>
+                <p style={{
+                  fontSize: 16, color: "#555", lineHeight: 1.85, marginBottom: 20,
+                }}>
+                  We specialize in a wide range of printing services — from commercial essentials like business cards and lamination, to bespoke event stationery for weddings and celebrations. Our expertise extends to custom packaging, CNC laser-cutting, and handcrafted artisanal souvenirs that celebrate our rich local heritage.
+                </p>
+                <p style={{
+                  fontSize: 16, color: "#555", lineHeight: 1.85, marginBottom: 32,
+                }}>
+                  With years of experience and a passion for precision, we combine modern technology with creative craftsmanship to bring your ideas to life — every detail, every time.
+                </p>
+
+                <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                  {["Precision Printing", "Fast Turnaround", "Custom Designs", "Eco-Friendly Options"].map((tag) => (
+                    <span key={tag} style={{
+                      padding: "8px 18px", borderRadius: 100,
+                      background: "rgba(78,36,138,0.08)",
+                      color: "#4E248A", fontSize: 13, fontWeight: 600,
+                      fontFamily: "'Outfit', sans-serif",
+                    }}>{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* =================== GALLERY SECTION =================== */}
+      <section style={{
+        padding: "100px 0",
+        background: "#fff",
+        position: "relative",
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+          <Reveal>
+            <div style={{ textAlign: "center", marginBottom: 56 }}>
+              <span style={{
+                display: "inline-block",
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 13, fontWeight: 600, letterSpacing: 3,
+                textTransform: "uppercase", color: "#4E248A",
+                marginBottom: 16, padding: "6px 20px",
+                borderRadius: 100, border: "1px solid rgba(78,36,138,0.2)",
+                background: "rgba(78,36,138,0.06)",
+              }}>Portfolio</span>
+              <h2 style={{
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: "clamp(32px, 5vw, 52px)",
+                fontWeight: 800, color: "#1a1a2e",
+                margin: "16px 0",
+              }}>Our Work Gallery</h2>
+              <p style={{
+                fontSize: 17, color: "#777", maxWidth: 560, margin: "0 auto", lineHeight: 1.7,
+              }}>
+                Browse through our recent projects — each one crafted with care, precision, and a touch of creativity.
+              </p>
+            </div>
+          </Reveal>
+
+          {/* Gallery Grid */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))",
+            gap: 20,
+          }}>
+            {filteredGallery.map((item, i) => (
+              <Reveal key={item.id} delay={0.05 * (i % 6)} direction="up">
+                <div
+                  className="zp-gallery-item"
+                  style={{
+                    position: "relative",
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    background: "#f0edf5",
+                    aspectRatio: i % 5 === 0 ? "1 / 1.2" : i % 3 === 0 ? "1.2 / 1" : "1 / 1",
+                  }}
+                  onClick={() => setLightbox(item)}
+                >
+                  {/* Placeholder image — replace src with your actual photo path */}
+                  <img
+                    src={item.src}
+                    alt={item.caption}
+                    style={{
+                      width: "100%", height: "100%",
+                      objectFit: "cover",
+                      transition: "transform 0.6s cubic-bezier(.22,1,.36,1)",
+                      display: "block",
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.parentElement.querySelector('.zp-placeholder').style.display = 'flex';
+                    }}
+                  />
+                  {/* Placeholder fallback */}
+                  <div className="zp-placeholder" style={{
+                    display: "flex",
+                    position: "absolute", inset: 0,
+                    alignItems: "center", justifyContent: "center",
+                    flexDirection: "column", gap: 8,
+                    color: "#9B8BB4",
+                    background: "linear-gradient(135deg, #f0edf5 0%, #e8e2f0 100%)",
+                  }}>
+                    <svg viewBox="0 0 48 48" fill="none" style={{ width: 40, height: 40 }}>
+                      <rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" strokeWidth="2" />
+                      <circle cx="17" cy="21" r="4" stroke="currentColor" strokeWidth="2" />
+                      <path d="M6 32l10-8 8 6 8-10 10 12" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                    </svg>
+                    <span style={{ fontSize: 12, fontWeight: 500 }}>Photo {item.id}</span>
+                  </div>
+
+                  {/* Hover overlay */}
+                  <div className="zp-gallery-overlay" style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(to top, rgba(30,15,60,0.85) 0%, transparent 60%)",
+                    opacity: 0,
+                    transition: "opacity 0.4s ease",
+                    display: "flex", alignItems: "flex-end",
+                    padding: 20,
+                  }}>
+                    <p style={{
+                      color: "#fff", fontSize: 14, fontWeight: 600, margin: 0,
+                      fontFamily: "'Outfit', sans-serif",
+                    }}>{item.caption}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+
+        {/* Lightbox */}
+        {lightbox && (
+          <div
+            onClick={() => setLightbox(null)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 9999,
+              background: "rgba(10,5,20,0.92)",
+              backdropFilter: "blur(12px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexDirection: "column", gap: 16,
+              padding: 24,
+              animation: "fadeIn 0.3s ease",
+            }}
+          >
+            <div style={{
+              maxWidth: "90vw", maxHeight: "80vh",
+              borderRadius: 16, overflow: "hidden",
+              background: "#1a1a2e",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              minWidth: 300, minHeight: 250,
+            }}>
+              <img
+                src={lightbox.src}
+                alt={lightbox.caption}
+                style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", display: "block" }}
+                onError={(e) => {
+                  e.target.style.display = "none";
+                }}
+              />
+              <div style={{
+                color: "#9B8BB4", textAlign: "center", padding: 40,
+              }}>
+                <svg viewBox="0 0 48 48" fill="none" style={{ width: 56, height: 56, marginBottom: 12 }}>
+                  <rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="17" cy="21" r="4" stroke="currentColor" strokeWidth="2" />
+                  <path d="M6 32l10-8 8 6 8-10 10 12" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                </svg>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}>Photo {lightbox.id}</p>
+                <p style={{ fontSize: 13, opacity: 0.6 }}>Replace with your image</p>
+              </div>
+            </div>
+            <p style={{
+              color: "#fff", fontSize: 15, fontWeight: 600,
+              fontFamily: "'Outfit', sans-serif",
+            }}>{lightbox.caption}</p>
+            <button
+              onClick={() => setLightbox(null)}
+              style={{
+                position: "absolute", top: 24, right: 24,
+                width: 44, height: 44, borderRadius: "50%",
+                background: "rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                color: "#fff", fontSize: 20, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all 0.3s",
+              }}
+            >✕</button>
+          </div>
+        )}
+      </section>
+    </main>
   );
 }
