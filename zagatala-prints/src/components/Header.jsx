@@ -218,7 +218,7 @@ function Header(){
                 </a>
                 ))}
                 <a
-                href="#quote"
+                href="https://wa.me/+994709087883"
                 className="cta-btn block mt-4 mb-3 px-5 py-3 text-sm text-center font-semibold uppercase rounded-full"
                 style={{ letterSpacing: "0.06em" }}
                 onClick={() => setMenuOpen(false)}
