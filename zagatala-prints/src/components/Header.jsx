@@ -161,7 +161,7 @@ function Header(){
                     </a>
                 ))}
                 <a
-                    href="#quote"
+                    href="https://wa.me/+994709087883"
                     className="cta-btn ml-2 px-6 py-2.5 text-sm font-semibold uppercase rounded-full"
                     style={{ letterSpacing: "0.06em" }}
                 >
