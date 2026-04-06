@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import Gallery from "./Gallery";
 
 // --- Intersection Observer Hook ---
 function useInView(options = {}) {
@@ -113,26 +114,26 @@ const services = [
 // }
 // ));
 
-const galleryItems = [
-  { id: 1,  src: "/images/image-1.png",   caption: "Premium Business Cards" },
-  { id: 2,  src: "/images/image-2.png",    caption: "Wedding Invitation Design" },
-  { id: 4,  src: "/images/image-4.png",     caption: "Custom Candy Wrappers" },
-  { id: 5,  src: "/images/image-5.png",     caption: "Custom Candy Wrappers" },
-  { id: 6,  src: "/images/image-6.png",     caption: "Custom Candy Wrappers" },
-  { id: 7,  src: "/images/image-7.png",     caption: "Custom Candy Wrappers" },
-  { id: 8,  src: "/images/image-8.png",     caption: "Custom Candy Wrappers" },
-  { id: 9,  src: "/images/image-9.png",     caption: "Custom Candy Wrappers" },
-  { id: 10,  src: "/images/image-10.png",     caption: "Custom Candy Wrappers" },
-  { id: 11,  src: "/images/image-11.png",     caption: "Custom Candy Wrappers" },
-  { id: 12,  src: "/images/image-12.png",     caption: "Custom Candy Wrappers" },
-  { id: 13,  src: "/images/image-13.png",     caption: "Custom Candy Wrappers" },
-  { id: 14,  src: "/images/image-14.png",     caption: "Custom Candy Wrappers" },
-  { id: 15,  src: "/images/image-15.png",     caption: "Custom Candy Wrappers" },
-  { id: 16,  src: "/images/image-16.png",     caption: "Custom Candy Wrappers" },
-  { id: 17,  src: "/images/image-17.png",     caption: "Custom Candy Wrappers" },
-  { id: 18,  src: "/images/image-18.png",     caption: "Custom Candy Wrappers" },
-  { id: 19, src: "/images/image-19.png",          caption: "Artisanal Souvenir" },
-];
+// const galleryItems = [
+//   { id: 1,  src: "https://github.com/AnmolSharma29/Zagatala-Prints-Website/blob/main/zagatala-prints/public/images/image-1.png",   caption: "Premium Business Cards" },
+//   { id: 2,  src: "/images/image-2.png",    caption: "Wedding Invitation Design" },
+//   { id: 4,  src: "/images/image-4.png",     caption: "Custom Candy Wrappers" },
+//   { id: 5,  src: "/images/image-5.png",     caption: "Custom Candy Wrappers" },
+//   { id: 6,  src: "/images/image-6.png",     caption: "Custom Candy Wrappers" },
+//   { id: 7,  src: "/images/image-7.png",     caption: "Custom Candy Wrappers" },
+//   { id: 8,  src: "/images/image-8.png",     caption: "Custom Candy Wrappers" },
+//   { id: 9,  src: "/images/image-9.png",     caption: "Custom Candy Wrappers" },
+//   { id: 10,  src: "/images/image-10.png",     caption: "Custom Candy Wrappers" },
+//   { id: 11,  src: "/images/image-11.png",     caption: "Custom Candy Wrappers" },
+//   { id: 12,  src: "/images/image-12.png",     caption: "Custom Candy Wrappers" },
+//   { id: 13,  src: "/images/image-13.png",     caption: "Custom Candy Wrappers" },
+//   { id: 14,  src: "/images/image-14.png",     caption: "Custom Candy Wrappers" },
+//   { id: 15,  src: "/images/image-15.png",     caption: "Custom Candy Wrappers" },
+//   { id: 16,  src: "/images/image-16.png",     caption: "Custom Candy Wrappers" },
+//   { id: 17,  src: "/images/image-17.png",     caption: "Custom Candy Wrappers" },
+//   { id: 18,  src: "/images/image-18.png",     caption: "Custom Candy Wrappers" },
+//   { id: 19, src: "/images/image-19.png",          caption: "Artisanal Souvenir" },
+// ];
 
 // --- CSS Keyframes injected once ---
 const styleId = "zagatala-main-styles";
@@ -428,170 +429,8 @@ export default function MainContent() {
         </div>
       </section>
 
-      {/* =================== GALLERY SECTION =================== */}
-      <section style={{
-        padding: "100px 0",
-        background: "#fff",
-        position: "relative",
-      }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-          <Reveal>
-            <div style={{ textAlign: "center", marginBottom: 56 }}>
-              <span style={{
-                display: "inline-block",
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: 13, fontWeight: 600, letterSpacing: 3,
-                textTransform: "uppercase", color: "#4E248A",
-                marginBottom: 16, padding: "6px 20px",
-                borderRadius: 100, border: "1px solid rgba(78,36,138,0.2)",
-                background: "rgba(78,36,138,0.06)",
-              }}>Portfolio</span>
-              <h2 style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: "clamp(32px, 5vw, 52px)",
-                fontWeight: 800, color: "#1a1a2e",
-                margin: "16px 0",
-              }}>Our Work Gallery</h2>
-              <p style={{
-                fontSize: 17, color: "#777", maxWidth: 560, margin: "0 auto", lineHeight: 1.7,
-              }}>
-                Browse through our recent projects — each one crafted with care, precision, and a touch of creativity.
-              </p>
-            </div>
-          </Reveal>
+      <Gallery></Gallery>
 
-          {/* Gallery Grid */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))",
-            gap: 20,
-          }}>
-            {filteredGallery.map((item, i) => (
-              <Reveal key={item.id} delay={0.05 * (i % 6)} direction="up">
-                <div
-                  className="zp-gallery-item"
-                  style={{
-                    position: "relative",
-                    borderRadius: 16,
-                    overflow: "hidden",
-                    cursor: "pointer",
-                    background: "#f0edf5",
-                    aspectRatio: i % 5 === 0 ? "1 / 1.2" : i % 3 === 0 ? "1.2 / 1" : "1 / 1",
-                  }}
-                  onClick={() => setLightbox(item)}
-                >
-                  {/* Placeholder image — replace src with your actual photo path */}
-                  <img
-                    src={item.src}
-                    alt={item.caption}
-                    style={{
-                      width: "100%", height: "100%",
-                      objectFit: "cover",
-                      transition: "transform 0.6s cubic-bezier(.22,1,.36,1)",
-                      display: "block",
-                    }}
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                      e.target.parentElement.querySelector('.zp-placeholder').style.display = 'flex';
-                    }}
-                  />
-                  {/* Placeholder fallback */}
-                  <div className="zp-placeholder" style={{
-                    display: "flex",
-                    position: "absolute", inset: 0,
-                    alignItems: "center", justifyContent: "center",
-                    flexDirection: "column", gap: 8,
-                    color: "#9B8BB4",
-                    background: "linear-gradient(135deg, #f0edf5 0%, #e8e2f0 100%)",
-                  }}>
-                    <svg viewBox="0 0 48 48" fill="none" style={{ width: 40, height: 40 }}>
-                      <rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" strokeWidth="2" />
-                      <circle cx="17" cy="21" r="4" stroke="currentColor" strokeWidth="2" />
-                      <path d="M6 32l10-8 8 6 8-10 10 12" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                    </svg>
-                    <span style={{ fontSize: 12, fontWeight: 500 }}>Photo {item.id}</span>
-                  </div>
-
-                  {/* Hover overlay */}
-                  <div className="zp-gallery-overlay" style={{
-                    position: "absolute", inset: 0,
-                    background: "linear-gradient(to top, rgba(30,15,60,0.85) 0%, transparent 60%)",
-                    opacity: 0,
-                    transition: "opacity 0.4s ease",
-                    display: "flex", alignItems: "flex-end",
-                    padding: 20,
-                  }}>
-                    <p style={{
-                      color: "#fff", fontSize: 14, fontWeight: 600, margin: 0,
-                      fontFamily: "'Outfit', sans-serif",
-                    }}>{item.caption}</p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-
-        {/* Lightbox */}
-        {lightbox && (
-          <div
-            onClick={() => setLightbox(null)}
-            style={{
-              position: "fixed", inset: 0, zIndex: 9999,
-              background: "rgba(10,5,20,0.92)",
-              backdropFilter: "blur(12px)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              flexDirection: "column", gap: 16,
-              padding: 24,
-              animation: "fadeIn 0.3s ease",
-            }}
-          >
-            <div style={{
-              maxWidth: "90vw", maxHeight: "80vh",
-              borderRadius: 16, overflow: "hidden",
-              background: "#1a1a2e",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              minWidth: 300, minHeight: 250,
-            }}>
-              <img
-                src={lightbox.src}
-                alt={lightbox.caption}
-                style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", display: "block" }}
-                onError={(e) => {
-                  e.target.style.display = "none";
-                }}
-              />
-              <div style={{
-                color: "#9B8BB4", textAlign: "center", padding: 40,
-              }}>
-                <svg viewBox="0 0 48 48" fill="none" style={{ width: 56, height: 56, marginBottom: 12 }}>
-                  <rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" strokeWidth="2" />
-                  <circle cx="17" cy="21" r="4" stroke="currentColor" strokeWidth="2" />
-                  <path d="M6 32l10-8 8 6 8-10 10 12" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                </svg>
-                <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600 }}>Photo {lightbox.id}</p>
-                <p style={{ fontSize: 13, opacity: 0.6 }}>Replace with your image</p>
-              </div>
-            </div>
-            <p style={{
-              color: "#fff", fontSize: 15, fontWeight: 600,
-              fontFamily: "'Outfit', sans-serif",
-            }}>{lightbox.caption}</p>
-            <button
-              onClick={() => setLightbox(null)}
-              style={{
-                position: "absolute", top: 24, right: 24,
-                width: 44, height: 44, borderRadius: "50%",
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: "#fff", fontSize: 20, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.3s",
-              }}
-            >✕</button>
-          </div>
-        )}
-      </section>
     </main>
   );
 }
