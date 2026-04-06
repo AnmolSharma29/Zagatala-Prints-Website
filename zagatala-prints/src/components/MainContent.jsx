@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import Gallery from "./Gallery";
 
 // --- Intersection Observer Hook ---
 function useInView(options = {}) {
@@ -429,7 +428,6 @@ export default function MainContent() {
         </div>
       </section>
 
-      <Gallery></Gallery>
 
     </main>
   );
