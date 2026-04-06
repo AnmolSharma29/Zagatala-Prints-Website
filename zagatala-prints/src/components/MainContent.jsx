@@ -1,3 +1,4 @@
+import SocialMedia from "./SocialMedia";
 import { useState, useEffect, useRef } from "react";
 
 // --- Intersection Observer Hook ---
@@ -203,7 +204,9 @@ export default function MainContent() {
   // const filteredGallery = galleryItems;
 
   return (
-    <main style={{ fontFamily: "'DM Sans', sans-serif", color: "#1a1a2e", overflow: "hidden" }}>
+    <main style={{fontFamily: "'DM Sans', sans-serif", color: "#1a1a2e", overflow: "hidden" }}>
+
+      <SocialMedia></SocialMedia>
 
       {/* =================== SERVICES SECTION =================== */}
       <section style={{
