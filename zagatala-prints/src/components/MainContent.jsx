@@ -200,7 +200,7 @@ export default function MainContent() {
 
   useEffect(() => { injectStyles(); }, []);
 
-  const filteredGallery = galleryItems;
+  // const filteredGallery = galleryItems;
 
   return (
     <main style={{ fontFamily: "'DM Sans', sans-serif", color: "#1a1a2e", overflow: "hidden" }}>
