@@ -1,5 +1,6 @@
 import SocialMedia from "./SocialMedia";
 import { useState, useEffect, useRef } from "react";
+import Banner from "./Banner";
 
 // --- Intersection Observer Hook ---
 function useInView(options = {}) {
@@ -207,7 +208,7 @@ export default function MainContent() {
     <main style={{fontFamily: "'DM Sans', sans-serif", color: "#1a1a2e", overflow: "hidden" }}>
 
       <SocialMedia></SocialMedia>
-
+      <Banner></Banner>
       {/* =================== SERVICES SECTION =================== */}
       <section style={{
         padding: "100px 0 80px",
